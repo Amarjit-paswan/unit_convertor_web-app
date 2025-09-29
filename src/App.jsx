@@ -11,23 +11,52 @@ function App() {
    const [amount, setamount] = useState(0);
    const [firstAmount, setfirstAmount] = useState(0);
    const [secondAmount, setsecondAmount] = useState(0);
+   const [result, setResult] = useState(null);
+
+   // to show previous result
+   const [history, setHistory] = useState([]);
+
+
+   
+   const convertedAmount = useUnitConversion(amount,fromUnit,toUnit);
 
    function swapValue(){
-      setFromUnit(toUnit);
-      setTo(fromUnit);
-   }
-
-
- 
-   let result = null;
-   const convertedAmount = useUnitConversion(amount,fromUnit,toUnit);
-   const convert = (e)=>{
-     e.preventDefault();
+     setFromUnit(toUnit);
+     setTo(fromUnit);
      
-    //  if(!convertedAmount) return;
-      result =convertedAmount;
+     setamount(secondAmount || result);
+     setsecondAmount(amount);
+     setResult(amount);
+     
+
+    }
+    
+    
+    
+    const convert = (e)=>{
+      e.preventDefault();
       
+      //  if(!convertedAmount) return;
+      setResult(convertedAmount);
+      setsecondAmount(convertedAmount)
       console.log(result);
+
+      if(convertedAmount !== null){
+           setHistory((prevHis) => [{
+              from: amount,
+              fromUnit,
+              to: convertedAmount,
+              toUnit,
+              timeStamp: new Date().toLocaleDateString()
+
+          },
+          ...prevHis
+          ])
+
+      }
+
+      console.log(history);
+      
       
       
       
@@ -36,7 +65,7 @@ function App() {
    
   return (
     <>
-      <div className="container">
+      <div className="container d-flex gap-5">
         
         <div className="unit_convertor_container ">
             <form action="" onSubmit={convert}>
@@ -47,7 +76,7 @@ function App() {
                   <h3 className='fw-bold  text-danger'>Unit Convertor Web App</h3>
                 </div>
                 {
-                  result && (
+                  !result ?'': (
                     <div className="result_box py-2">
                   <h4>Result is: <span className='text-success'>{result} {toUnit}</span></h4>
                     </div>
@@ -58,6 +87,7 @@ function App() {
                 {/* From unit field  */}
                 < InputBox 
                   label = "From"
+                  amount={amount}
                   fromUnit={fromUnit}
                   selectUnit={fromUnit}
                   firstAmount={amount}
@@ -93,6 +123,27 @@ function App() {
             </form>
         </div>
 
+        { history.length > 0 && (
+        <div className="histor_box p-3 bg-white rounded">
+            <div className="histor_title py-2 border-bottom">
+              <h3 className="text-warning">History</h3>
+            </div>
+
+            <ol>
+              {
+                
+                
+                history.map((item,index) =>{
+                  return (
+                  <li key={index}>
+                    {item.from} {item.fromUnit} = {item.to} {item.toUnit} ({item.timeStamp})
+                    </li>
+                  ) 
+                })
+              }
+            </ol>
+        </div>
+        )}
       </div>
     </>
   )
