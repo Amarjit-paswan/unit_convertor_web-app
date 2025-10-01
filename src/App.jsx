@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import InputBox from './components/InputBox';
 import  useUnitConversion  from './hooks/useUnitConversion';
+import axios from 'axios';
 import './App.css'
 
 function App() {
@@ -33,10 +34,37 @@ function App() {
     
     
     
-    const convert = (e)=>{
+    const convert = async (e)=>{
       e.preventDefault();
       
+
+      try{
+        const res = await axios.post('http://127.0.0.1:8000/api/convert',{
+          from: fromUnit,
+          to: toUnit,
+          value: amount
+        });
+
+        setResult(res.data.result);
+        setsecondAmount(res.data.result);
+
+        if(res.data.result !== null){
+          setHistory((prevHis) => [{
+            from: res.data.value,
+            fromUnit: res.data.from,
+            to: res.data.result,
+            toUnit: res.data.to,
+            timeStamp: new Date().toLocaleDateString()
+          },
+          ...prevHis
+          ]);
+        }
+      }catch(error){
+        console.error("Conversion failed" , error);
+      }
       //  if(!convertedAmount) return;
+
+      /*
       setResult(convertedAmount);
       setsecondAmount(convertedAmount)
       console.log(result);
@@ -57,7 +85,7 @@ function App() {
 
       console.log(history);
       
-      
+      */
       
       
    }
