@@ -25,7 +25,7 @@ export default function useUnitConversion(amount,fromunit,tounit){
             }
         }
         
-        fetchData();
+        fetchData()
         
     },[amount,tounit])
 
