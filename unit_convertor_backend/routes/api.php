@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\SignupController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Http;
@@ -30,14 +31,6 @@ Route::post('/convert', function (Request $request) {
 
     }
 
-
-    // $result = $value * 2;
-
-    // return response()->json([
-    //     'result' => $result,
-    //     'from' => $from,
-    //     'to' => $to
-    // ]);
 });
 
 
@@ -48,3 +41,6 @@ Route::get('/history', function (){
         'amount' => 200
     ]);
 });
+
+
+Route::post('/signup', [SignupController::class, 'signup']);
