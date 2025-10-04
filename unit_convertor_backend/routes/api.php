@@ -1,6 +1,9 @@
 <?php
 
+use App\Http\Controllers\LoginController;
 use App\Http\Controllers\SignupController;
+use App\Http\Controllers\UnitRecordController;
+use App\Http\Controllers\UnitRecordHistory_Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Http;
@@ -44,3 +47,6 @@ Route::get('/history', function (){
 
 
 Route::post('/signup', [SignupController::class, 'signup']);
+Route::post('/login', [LoginController::class, 'login']);
+Route::post('/unit_record', [UnitRecordController::class, 'store']);
+Route::middleware('auth:sanctum')->get('/history', [UnitRecordHistory_Controller::class, 'unit_record_history']);
