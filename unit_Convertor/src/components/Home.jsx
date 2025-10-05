@@ -1,0 +1,229 @@
+import { useEffect, useState } from "react";
+import React from "react";
+import InputBox from "./InputBox";
+import useUnitConversion from "../hooks/useUnitConversion";
+import axios from "axios";
+import Logout from "./Logout";
+// import 'App.css';
+
+
+export default function Home(){
+    const [selectUnit, setselectUnit] = useState("meter");
+   const [fromUnit, setFromUnit] = useState("meter");
+   const [toUnit, setTo] = useState("centimeter");
+   const [amount, setamount] = useState(0);
+   const [firstAmount, setfirstAmount] = useState(0);
+   const [secondAmount, setsecondAmount] = useState(0);
+   const [result, setResult] = useState(null);
+
+   // to show previous result
+   const [history, setHistory] = useState([]);
+
+
+  const user = JSON.parse(localStorage.getItem('user'));
+  // console.log(user);
+
+  
+    useEffect(()=>{
+      const fetchHistory = async () =>{
+        const history_res = await  axios.get('http://localhost:8000/api/history',{
+          headers:{
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        })
+
+        setHistory(history_res.data.history || [])
+          
+        
+      }
+
+      fetchHistory();
+    },[]);
+  
+   
+   const convertedAmount = useUnitConversion(amount,fromUnit,toUnit);
+
+   function swapValue(){
+     setFromUnit(toUnit);
+     setTo(fromUnit);
+     
+     setamount(secondAmount || result);
+     setsecondAmount(amount)
+     setResult(amount);
+     
+
+    }
+    
+    
+    
+    const convert = async (e)=>{
+      e.preventDefault();
+
+      try{
+       const res = await axios.post('http://127.0.0.1:8000/api/convert',{
+          from: fromUnit,
+          to: toUnit,
+          value: amount
+        })
+        console.log(res.data);
+        
+        // Store values in comopents from backend response 
+        setamount(res.data.conversions[fromUnit]);
+        setResult(res.data.conversions[toUnit]);
+        setsecondAmount(res.data.conversions[toUnit]);
+
+
+
+        let result = res.data.conversions[toUnit];
+
+        if(result !== null){
+
+          const UnitRecord_res = await axios.post('http://127.0.0.1:8000/api/unit_record',{
+            'from_unit' : fromUnit,
+            'to_unit' : toUnit,
+            'value' : amount,
+            'result' : result,
+            'user_id' : user.id
+          });
+
+           // ✅ Fetch updated history after insertion
+            const historyRes = await axios.get('http://127.0.0.1:8000/api/history', {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem('token')}`,
+              },
+            });
+
+            console.log(historyRes);
+            
+
+            setHistory(historyRes.data.history || []);
+
+
+          
+
+          setFromUnit('meter');
+          setTo('centimeter');
+          setamount(0);
+          setfirstAmount(0);
+          setsecondAmount(0);
+          setResult(null);
+          setselectUnit('meter');
+          // console.log(UnitRecord_res);
+          
+
+          setHistory((prevHis) => [{
+            'from_unit' : res.data.unit,
+            'value' : res.data.amount,
+            'to_unit' : toUnit,
+            'result' : res.data.conversions[toUnit],
+            'created_at' : new Date().toLocaleDateString()
+          },
+          ...prevHis
+          ]
+
+          )
+        }
+
+        
+
+      }catch(error){
+        console.error(error);
+        
+      }
+      
+   
+    }
+
+
+    
+  return (
+    <>  
+      <div className="navbar my-2 bg-white p-2 rounded d-flex justify-content-center gap-3 align-items-start border">
+
+          <h3 className="">Welcome User : <span className="fw-bold text-success"> {user?.username} </span></h3>
+          <Logout />
+      </div>
+      <div className="container d-flex gap-5">
+        
+        <div className="unit_convertor_container ">
+            <form action="" onSubmit={convert}>
+              <div className="unit_convertor_form-box p-3 px-4 rounded shadow bg-white">
+
+                {/* Title  */}
+                <div className="title text-center pt-2 mb-3 border-bottom">
+                  <h3 className='fw-bold  text-danger'>Unit Convertor Web App</h3>
+                </div>
+                {
+                  !result ?'': (
+                    <div className="result_box py-2">
+                  <h4>Result is: <span className='text-success'>{result} {toUnit}</span></h4>
+                    </div>
+                  )
+                }
+                
+
+                {/* From unit field  */}
+                < InputBox 
+                  label = "From"
+                  amount={amount}
+                  fromUnit={fromUnit}
+                  selectUnit={fromUnit}
+                  firstAmount={amount}
+                  onChangeUnit_Option={(unit) => setFromUnit(unit)}
+                  onChangeUnit={(val) => setamount(val)}
+
+                />
+
+                {/* Swap unit field  */}
+                <div className="swap_field mt-3">
+                  <button onClick={swapValue} type="button" className='btn btn-warning'>Swap </button>
+                </div>
+
+                {/* To unit field  */}
+                < InputBox 
+                  label = "To"
+                  toUnit={toUnit}
+                  selectUnit={toUnit}
+                  amount = {secondAmount}
+                  onChangeUnit={(val) => setsecondAmount(val)}
+                  onChangeUnit_Option={(unit) => setTo(unit)}
+
+                />
+
+
+                {/* Convert Button  */}
+                <div className="d-grid mt-3">
+                  <button type="submit" className="btn btn-success">Convert {fromUnit} to {toUnit} </button>
+                  <button type="button" className="btn btn-warning mt-2" >Fetch</button>
+                </div>
+                
+              </div>
+
+            </form>
+        </div>
+
+        { history.length > 0 && (
+        <div className="histor_box p-3 bg-white rounded">
+            <div className="histor_title py-2 border-bottom">
+              <h3 className="text-warning">History</h3>
+            </div>
+
+            <ol>
+              {
+                
+                
+                history.map((item,index) =>{
+                  return (
+                  <li key={index}>
+                    {item.value} {item.from_unit} = {item.result} {item.to_unit} ({ new Date( item.created_at).toLocaleString()})
+                    </li>
+                  ) 
+                })
+              }
+            </ol>
+        </div>
+        )}
+      </div>
+    </>
+  )
+}

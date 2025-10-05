@@ -50,3 +50,12 @@ Route::post('/signup', [SignupController::class, 'signup']);
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/unit_record', [UnitRecordController::class, 'store']);
 Route::middleware('auth:sanctum')->get('/history', [UnitRecordHistory_Controller::class, 'unit_record_history']);
+
+Route::middleware('auth:sanctum')->post('/logout', function (Request $request){
+    $request->user()->tokens()->delete();
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Logout Successfully'
+    ]);
+});
